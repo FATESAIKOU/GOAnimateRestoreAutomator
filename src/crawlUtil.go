@@ -99,7 +99,7 @@ func ConvToFloat32s(num_strs []string) []float32 {
     res := []float32{}
 
     for i := range num_strs {
-        f, _ := strconv.ParseFloat(num_strs[i], 32) 
+        f, _ := strconv.ParseFloat(num_strs[i], 32)
         res = append(res, float32(f))
     }
 

@@ -9,7 +9,7 @@ import (
 
 func main() {
     for {
-        fmt.Println("[Start Downloading]")
+        fmt.Println("[Start Download]")
 
         // Load cfg
         config := LoadCfg(os.Args[1])
@@ -23,5 +23,7 @@ func main() {
         // sleep
         num, _ := strconv.Atoi(os.Args[3])
         time.Sleep(time.Duration(num) * time.Second)
+
+        fmt.Println("[End of Downloading]")
     }
 }
