@@ -5,6 +5,6 @@ import (
 )
 
 func main() {
-    rows := getRows("聖印", 185)
+    rows := getRows("FRANXX", []int{283, 709})
     fmt.Println(rows)
 }

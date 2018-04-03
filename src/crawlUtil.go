@@ -80,12 +80,18 @@ func getAttr(tag html.Token, attr string) (value string) {
 }
 
 
-func getRows(keyword string, team_id int) []Row {
-    path := fmt.Sprintf(
-        "https://share.dmhy.org/topics/list?team_id=%d&keyword=%s",
-        team_id, keyword)
-    resp, _ := GetContent(path)
-    rows := RowReader(resp)
+func getRows(keyword string, team_id []int) []Row {
+    result_rows := []Row{}
 
-    return rows
+    for i := range team_id {
+        path := fmt.Sprintf(
+            "https://share.dmhy.org/topics/list?team_id=%d&keyword=%s",
+            team_id[i], keyword)
+        resp, _ := GetContent(path)
+        rows := RowReader(resp)
+
+        result_rows = append(result_rows, rows...)
+    }
+
+    return result_rows
 }
