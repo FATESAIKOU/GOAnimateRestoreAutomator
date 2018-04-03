@@ -4,6 +4,8 @@ import (
     "fmt"
     "net/http"
     "strings"
+    "strconv"
+    "regexp"
 
     "golang.org/x/net/html"
     "golang.org/x/net/html/atom"
@@ -93,6 +95,18 @@ func LoadEpisodesToMap(m map[float32]bool, episodes []float32) {
 }
 
 
+func ConvToFloat32s(num_strs []string) []float32 {
+    res := []float32{}
+
+    for i := range num_strs {
+        f, _ := strconv.ParseFloat(num_strs[i], 32) 
+        res = append(res, float32(f))
+    }
+
+    return res
+}
+
+
 func ExtractCands(rows []Row, episodes []float32, keyword string) []Candidate {
     tmp_cands := []Candidate{}
 
@@ -104,8 +118,11 @@ func ExtractCands(rows []Row, episodes []float32, keyword string) []Candidate {
     new_episodes := make(map[float32]bool)
     for i := range rows {
         // regexp
-        // row_epis := reg(rows[i].title)
-        row_epis := []float32{1, 2, 3}
+        re := regexp.MustCompile(`(\[.*?\])|(【.*?】)`)
+        matchs := re.FindAllString(rows[i].title, -1)
+        re2 := regexp.MustCompile(`\d+(\.\d+)*`)
+        num_strs := re2.FindAllString(matchs[2], -1)
+        row_epis := ConvToFloat32s(num_strs)
 
         // is in episodes?
         is_downloaded := false
@@ -128,7 +145,7 @@ func ExtractCands(rows []Row, episodes []float32, keyword string) []Candidate {
         // append
         tmp_cands = append(tmp_cands, Candidate{
             keyword: keyword,
-            episodes: []float32{0.0},
+            episodes: row_epis,
             magnet: rows[i].magnet})
     }
 
