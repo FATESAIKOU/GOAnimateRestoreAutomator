@@ -120,9 +120,16 @@ func ExtractCands(rows []Row, episodes []float32, keyword string) []Candidate {
         // regexp
         re := regexp.MustCompile(`(\[.*?\])|(【.*?】)`)
         matchs := re.FindAllString(rows[i].title, -1)
+        if len(matchs) < 3 {
+            continue
+        }
+
         re2 := regexp.MustCompile(`\d+(\.\d+)*`)
         num_strs := re2.FindAllString(matchs[2], -1)
         row_epis := ConvToFloat32s(num_strs)
+        if len(row_epis) == 0 {
+            continue
+        }
 
         // is in episodes?
         is_downloaded := false
@@ -155,12 +162,20 @@ func ExtractCands(rows []Row, episodes []float32, keyword string) []Candidate {
 
 func GetCands(keyword string, team_ids []int, episodes []float32) []Candidate {
     cands := []Candidate{}
+    path := fmt.Sprintf("https://share.dmhy.org/topics/list?keyword=%s", keyword)
 
+    paths := []string{}
     for i := range team_ids {
-        path := fmt.Sprintf(
-            "https://share.dmhy.org/topics/list?team_id=%d&keyword=%s",
-            team_ids[i], keyword)
-        resp, _ := GetContent(path)
+        paths = append(paths, fmt.Sprintf(
+            path + "&team_id=%d", team_ids[i]))
+    }
+
+    if len(paths) == 0 {
+        paths = append(paths, path)
+    }
+
+    for i := range paths {
+        resp, _ := GetContent(paths[i])
         rows := RowReader(resp)
 
         tmp_cands := ExtractCands(rows, episodes, keyword)

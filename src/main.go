@@ -1,17 +1,27 @@
 package main
 
 import (
-    //"fmt"
+    "fmt"
     "os"
+    "time"
+    "strconv"
 )
 
 func main() {
-    // Load cfg
-    config := LoadCfg(os.Args[1])
+    for {
+        fmt.Println("[Start Downloading]")
 
-    // download
-    config.StartDownload()
+        // Load cfg
+        config := LoadCfg(os.Args[1])
 
-    // restore result
-    //config.Save(os.Args[1])
+        // download
+        config.StartDownload(os.Args[2])
+
+        // restore result
+        config.Save(os.Args[1])
+
+        // sleep
+        num, _ := strconv.Atoi(os.Args[3])
+        time.Sleep(time.Duration(num) * time.Second)
+    }
 }
