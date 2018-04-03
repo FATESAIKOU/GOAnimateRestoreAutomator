@@ -14,6 +14,12 @@ type Row struct {
     magnet string
 }
 
+type Candidate struct {
+    keyword string
+    episodes []float32
+    magnet string
+}
+
 type HttpError struct {
     original string
 }
@@ -47,9 +53,9 @@ func RowReader(resp *http.Response) []Row {
         }
 
         if t.DataAtom == atom.A {
-            if tt == html.StartTagToken && getAttr(t, "title") == "磁力下載" {
+            if tt == html.StartTagToken && GetAttr(t, "title") == "磁力下載" {
                 title = strings.TrimSpace(title)
-                rows = append(rows, Row{title: title, magnet: getAttr(t, "href")})
+                rows = append(rows, Row{title: title, magnet: GetAttr(t, "href")})
                 title = ""
             }
 
@@ -57,8 +63,8 @@ func RowReader(resp *http.Response) []Row {
                 inside_title = false
             }
 
-            if tt == html.StartTagToken && getAttr(t, "target") == "_blank"  &&
-                strings.Contains(getAttr(t, "href"), "/topics/view") {
+            if tt == html.StartTagToken && GetAttr(t, "target") == "_blank"  &&
+                strings.Contains(GetAttr(t, "href"), "/topics/view") {
                 inside_title = true
             }
         }
@@ -68,7 +74,7 @@ func RowReader(resp *http.Response) []Row {
 }
 
 
-func getAttr(tag html.Token, attr string) (value string) {
+func GetAttr(tag html.Token, attr string) (value string) {
     for i := range tag.Attr {
         if tag.Attr[i].Key == attr {
             value = tag.Attr[i].Val
@@ -80,18 +86,70 @@ func getAttr(tag html.Token, attr string) (value string) {
 }
 
 
-func getRows(keyword string, team_id []int) []Row {
-    result_rows := []Row{}
+func LoadEpisodesToMap(m map[float32]bool, episodes []float32) {
+    for i := range episodes {
+        m[episodes[i]] = true
+    }
+}
 
-    for i := range team_id {
+
+func ExtractCands(rows []Row, episodes []float32, keyword string) []Candidate {
+    tmp_cands := []Candidate{}
+
+    // Load Episodes
+    has_episodes := make(map[float32]bool)
+    LoadEpisodesToMap(has_episodes, episodes)
+
+    // Extract Cands
+    new_episodes := make(map[float32]bool)
+    for i := range rows {
+        // regexp
+        // row_epis := reg(rows[i].title)
+        row_epis := []float32{1, 2, 3}
+
+        // is in episodes?
+        is_downloaded := false
+        for j := range row_epis {
+            if has_episodes[row_epis[j]] == true ||
+                new_episodes[row_epis[j]] == true {
+                is_downloaded = true
+                break
+            }
+        }
+
+        if is_downloaded {
+            is_downloaded = false
+            continue
+        }
+
+        // update new episodes
+        LoadEpisodesToMap(new_episodes, row_epis)
+
+        // append
+        tmp_cands = append(tmp_cands, Candidate{
+            keyword: keyword,
+            episodes: []float32{0.0},
+            magnet: rows[i].magnet})
+    }
+
+    return tmp_cands
+}
+
+
+func GetCands(keyword string, team_ids []int, episodes []float32) []Candidate {
+    cands := []Candidate{}
+
+    for i := range team_ids {
         path := fmt.Sprintf(
             "https://share.dmhy.org/topics/list?team_id=%d&keyword=%s",
-            team_id[i], keyword)
+            team_ids[i], keyword)
         resp, _ := GetContent(path)
         rows := RowReader(resp)
 
-        result_rows = append(result_rows, rows...)
+        tmp_cands := ExtractCands(rows, episodes, keyword)
+
+        cands = append(cands, tmp_cands...)
     }
 
-    return result_rows
+    return cands
 }

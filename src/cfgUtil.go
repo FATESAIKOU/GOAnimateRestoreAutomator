@@ -16,7 +16,7 @@ type Config struct {
 type QueryAtom struct {
     Team_ids []int
     Keyword string
-    Episode float32
+    Episodes []float32
 }
 
 
@@ -43,6 +43,16 @@ func (self *Config) Save(config_path string) *Config {
     // Marshal and Restore
     raw_cfg_json, _ := json.Marshal(self)
     ioutil.WriteFile(config_path, raw_cfg_json, 0644)
+
+    return self
+}
+
+func (self *Config) UpdateEpisode(keyword string, value float32) *Config {
+    for i := range self.Logs {
+        if self.Logs[i].Keyword == keyword {
+            self.Logs[i].Episodes = append(self.Logs[i].Episodes, value)
+        }
+    }
 
     return self
 }

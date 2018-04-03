@@ -1,10 +1,17 @@
 package main
 
 import (
-    "fmt"
+    //"fmt"
+    "os"
 )
 
 func main() {
-    rows := getRows("FRANXX", []int{283, 709})
-    fmt.Println(rows)
+    // Load cfg
+    config := LoadCfg(os.Args[1])
+
+    // download
+    config.StartDownload()
+
+    // restore result
+    //config.Save(os.Args[1])
 }
