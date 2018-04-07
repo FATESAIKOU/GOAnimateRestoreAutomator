@@ -21,9 +21,9 @@ func main() {
         config.Save(os.Args[1])
 
         // sleep
+        fmt.Println("[End of Downloading]")
         num, _ := strconv.Atoi(os.Args[3])
         time.Sleep(time.Duration(num) * time.Second)
 
-        fmt.Println("[End of Downloading]")
     }
 }

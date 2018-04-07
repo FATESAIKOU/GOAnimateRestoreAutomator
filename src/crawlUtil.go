@@ -94,13 +94,12 @@ func LoadEpisodesToMap(m map[float32]bool, episodes []float32) {
     }
 }
 
-
-func ConvToFloat32s(num_strs []string) []float32 {
+// TODO Add Range Support!!
+func ConvToFloat32Range(num_strs []string) []float32 {
     res := []float32{}
-
-    for i := range num_strs {
-        f, _ := strconv.ParseFloat(num_strs[i], 32)
-        res = append(res, float32(f))
+    if len(num_strs) == 1 {
+        num, _ := strconv.ParseFloat(num_strs[0], 32)
+        res = append(res, float32(num))
     }
 
     return res
@@ -126,7 +125,7 @@ func ExtractCands(rows []Row, episodes []float32, keyword string) []Candidate {
 
         re2 := regexp.MustCompile(`\d+(\.\d+)*`)
         num_strs := re2.FindAllString(matchs[2], -1)
-        row_epis := ConvToFloat32s(num_strs)
+        row_epis := ConvToFloat32Range(num_strs)
         if len(row_epis) == 0 {
             continue
         }
