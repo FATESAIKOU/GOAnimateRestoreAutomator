@@ -6,9 +6,11 @@ import (
     "strings"
     "strconv"
     "regexp"
+    "net/http/cookiejar"
 
     "golang.org/x/net/html"
     "golang.org/x/net/html/atom"
+    "net/url"
 )
 
 type Row struct {
@@ -27,8 +29,28 @@ type HttpError struct {
 }
 
 
-func GetContent(url string) (resp *http.Response, err error) {
-    resp, err = http.Get(url)
+func GetContent(ur string) (resp *http.Response, err error) {
+    // Setup cookie
+    jar, _ := cookiejar.New(nil)
+    var cookies []*http.Cookie
+    cookies = append(cookies, &http.Cookie{
+        Name: "cf_clearance",
+        Value: "af596069241d985207dc25c5f55a8742a494959f-1596954475-0-1ze41e1b5bzaccd7c85zeb3f3455-150",
+        Path: "/",
+        Domain: ".dmhy.org",
+    })
+    u, _ := url.Parse(ur)
+    jar.SetCookies(u, cookies)
+
+    // Set cookie
+    client := &http.Client{ Jar: jar }
+    req, _ := http.NewRequest("GET", ur, nil)
+
+    // Setup header
+    req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36")
+
+    // Do request
+    resp, err = client.Do(req)
 
     return
 }
@@ -97,7 +119,8 @@ func LoadEpisodesToMap(m map[float32]bool, episodes []float32) {
 // TODO Add Range Support!!
 func ConvToFloat32Range(num_strs []string) []float32 {
     res := []float32{}
-    if len(num_strs) == 1 {
+
+    if len(num_strs) == 1 || (len(num_strs) == 2 && num_strs[0][0] != 'v') {
         num, _ := strconv.ParseFloat(num_strs[0], 32)
         res = append(res, float32(num))
     }
@@ -106,7 +129,7 @@ func ConvToFloat32Range(num_strs []string) []float32 {
 }
 
 
-func ExtractCands(rows []Row, episodes []float32, keyword string) []Candidate {
+func ExtractCands(rows []Row, episodes []float32, keyword string, new_episodes map[float32]bool) []Candidate {
     tmp_cands := []Candidate{}
 
     // Load Episodes
@@ -114,16 +137,15 @@ func ExtractCands(rows []Row, episodes []float32, keyword string) []Candidate {
     LoadEpisodesToMap(has_episodes, episodes)
 
     // Extract Cands
-    new_episodes := make(map[float32]bool)
     for i := range rows {
         // regexp
-        re := regexp.MustCompile(`(\[.*?\])|(【.*?】)`)
+        re := regexp.MustCompile(`(\[.*?\])|(【.*?】)|(「.*?」)`)
         matchs := re.FindAllString(rows[i].title, -1)
-        if len(matchs) < 3 {
+        if len(matchs) < 5 {
             continue
         }
 
-        re2 := regexp.MustCompile(`\d+(\.\d+)*`)
+        re2 := regexp.MustCompile(`(\d+)|(v\d+)`)
         num_strs := re2.FindAllString(matchs[2], -1)
         row_epis := ConvToFloat32Range(num_strs)
         if len(row_epis) == 0 {
@@ -173,11 +195,12 @@ func GetCands(keyword string, team_ids []int, episodes []float32) []Candidate {
         paths = append(paths, path)
     }
 
+    new_episodes := make(map[float32]bool)
     for i := range paths {
         resp, _ := GetContent(paths[i])
         rows := RowReader(resp)
 
-        tmp_cands := ExtractCands(rows, episodes, keyword)
+        tmp_cands := ExtractCands(rows, episodes, keyword, new_episodes)
 
         cands = append(cands, tmp_cands...)
     }
