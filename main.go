@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"magnet_link_crawler"
-	"magnet_link_downloader"
-	"request_parser"
+	"github.com/FATESAIKOU/GOAnimateRestoreAutomator/magnet_link_crawler"
+	"github.com/FATESAIKOU/GOAnimateRestoreAutomator/magnet_link_downloader"
+	"github.com/FATESAIKOU/GOAnimateRestoreAutomator/request_parser"
 )
 
 func main() {
