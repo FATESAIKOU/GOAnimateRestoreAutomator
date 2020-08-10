@@ -1,12 +1,7 @@
 {
   "animateName": {
-    "episodeId": [
-      "1st_magnet_link",
-      "2nd_magnet_link"
-    ],
-    "episodeId2": [
-      "1st_magnet_link",
-      "2st_magnet_link"
-    ]
+    "completedEpisode": ["1", "2", "3"],
+    "preferTeamIds": [1, 2, 3],
+    "preferParser": ["[\d+]"]
   }
 }
