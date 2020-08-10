@@ -1,7 +1,13 @@
 {
-  "animateName": {
-    "completedEpisode": ["1", "2", "3"],
-    "preferTeamIds": [1, 2, 3],
-    "preferParser": ["[\d+]"]
+  "animate keyword": {
+    "CompletedEpisodes": [
+      "1", "2", "3"
+    ],
+    "PreferTeamIds": [
+      "1", "2", "3"
+    ],
+    "PreferParser": [
+      "[\\d+]"
+    ]
   }
 }
