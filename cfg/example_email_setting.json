@@ -1,0 +1,10 @@
+{
+  "publisherAccount": "publisher@example.com",
+  "publisherPassword": "publisher_password",
+  "imapService": "google.com:587",
+  "mailList": [
+    "subscriber1@example.com",
+    "subscriber2@example.com",
+    "subscriber3@example.com"
+  ]
+}

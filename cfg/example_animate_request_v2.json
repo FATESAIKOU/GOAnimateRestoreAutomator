@@ -1,10 +1,10 @@
 {
-  "animate_name": {
-    "episode_id": [
+  "animateName": {
+    "episodeId": [
       "1st_magnet_link",
       "2nd_magnet_link"
     ],
-    "episode_id2": [
+    "episodeId2": [
       "1st_magnet_link",
       "2st_magnet_link"
     ]
