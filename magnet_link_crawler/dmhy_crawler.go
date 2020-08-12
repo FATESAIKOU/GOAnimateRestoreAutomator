@@ -9,37 +9,72 @@ import (
 	"net/http/cookiejar"
 	"net/url"
 	"regexp"
+	"sort"
 	"strconv"
 )
 
 type AnimateMagnetInfo map[string]map[float64][]MagnetLinkInfo
 
 type MagnetLinkInfo struct {
-	title string
-	magnetLink string
-	episodes []float64
-	btNumber int
+	Title string
+	MagnetLink string
+	Episodes []float64
+	BtNumber int
 }
 
-// Entrypoint
-func GetAnimateMagnetInfo(pageUrl string, info *AnimateRequestInfo) AnimateMagnetInfo {
+// Public
+func GetAnimateMagnetInfo(pageUrl string, cfg *AnimateRequestInfo) AnimateMagnetInfo {
 	animateMagnetInfo := make(AnimateMagnetInfo)
 
-	for animateKey, animateStatus := range info.AnimateStatus {
-		resp, _ := GetPage(pageUrl + "?keyword=" + animateKey)
-		magnetLinkInfos := ExtractDmhyMagnetLinkInfo(resp)
-		episodeMagnetMap := genEpisodeMagnetMap(magnetLinkInfos)
+	for animateKey, animateStatus := range cfg.AnimateStatus {
+		// initialization
+		animateMagnetInfo[animateKey] = make(map[float64][]MagnetLinkInfo)
+		teamIds := animateStatus.PreferTeamIds
+		if len(teamIds) == 0 {
+			teamIds = append(teamIds, "")
+		}
 
-		animateMagnetInfo[animateKey] = episodeMagnetMap
+		// Crawl and collect magnet link info
+		for _, teamId := range teamIds {
+			resp, _ := getPage(pageUrl + "?keyword=" + url.PathEscape(animateKey) + "&team_id=" + teamId)
+			magnetLinkInfos := extractDmhyMagnetLinkInfo(resp, animateStatus)
+			episodeMagnetMap := genEpisodeMagnetMap(magnetLinkInfos, animateStatus)
 
-		fmt.Println(animateStatus)
+			for episode, magnetLinkInfos := range episodeMagnetMap {
+				animateMagnetInfo[animateKey][episode] = append(
+					animateMagnetInfo[animateKey][episode], magnetLinkInfos...)
+			}
+		}
+
+		// Sort result with BtNumber
+		for episode, _ := range animateMagnetInfo[animateKey] {
+			sort.Slice(animateMagnetInfo[animateKey][episode], func(i int, j int) bool {
+				return animateMagnetInfo[animateKey][episode][i].BtNumber >
+					animateMagnetInfo[animateKey][episode][j].BtNumber
+			})
+		}
 	}
 
 	return animateMagnetInfo
 }
 
-// Public
-func GetPage(pageUrl string) (resp *http.Response, err error) {
+func DumpAnimateMagnetInfo(animateMagnetInfo AnimateMagnetInfo) {
+	for animateKey, episodeMagnetLinkInfos := range animateMagnetInfo {
+		fmt.Println("=========================")
+		fmt.Println("Name: " + animateKey)
+		for episodeId, episodeMagnetLinkInfo := range episodeMagnetLinkInfos {
+			fmt.Println("Episode: ", episodeId)
+			for _, magnetLinkInfo := range episodeMagnetLinkInfo {
+				fmt.Println("MagnetLink/btNums: ",
+					magnetLinkInfo.MagnetLink[:50]+ ".../" + strconv.Itoa(magnetLinkInfo.BtNumber))
+			}
+		}
+		fmt.Println("=========================")
+	}
+}
+
+// Private
+func getPage(pageUrl string) (resp *http.Response, err error) {
 	// Setup cookie
 	jar, _ := cookiejar.New(nil)
 	var cookies []*http.Cookie
@@ -54,7 +89,7 @@ func GetPage(pageUrl string) (resp *http.Response, err error) {
 
 	// Set cookie
 	client := &http.Client{ Jar: jar }
-	req, _ := http.NewRequest("GET", pageUrl, nil)
+	req, _ := http.NewRequest("GET", u.String(), nil)
 
 	// Setup header
 	req.Header.Set("User-Agent",
@@ -66,7 +101,7 @@ func GetPage(pageUrl string) (resp *http.Response, err error) {
 	return
 }
 
-func ExtractDmhyMagnetLinkInfo(resp *http.Response) []MagnetLinkInfo {
+func extractDmhyMagnetLinkInfo(resp *http.Response, animateStatus AnimateStatus) []MagnetLinkInfo {
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
@@ -78,14 +113,14 @@ func ExtractDmhyMagnetLinkInfo(resp *http.Response) []MagnetLinkInfo {
 		title := s.Find(".title a[target=_blank]").Text()
 		magnetLink, _ := s.Find(".download-arrow").Attr("href")
 		btNumber, _ := strconv.Atoi(s.Find(".btl_1").Text())
-		episodes := parseEpisode(title)
+		episodes := parseEpisode(title, animateStatus.PreferParser)
 
 		if len(episodes) > 0 {
 			magnetLinkInfos = append(magnetLinkInfos, MagnetLinkInfo{
-				title: title,
-				magnetLink: magnetLink,
-				episodes: episodes,
-				btNumber: btNumber,
+				Title: title,
+				MagnetLink: magnetLink,
+				Episodes: episodes,
+				BtNumber: btNumber,
 			})
 		}
 	})
@@ -93,28 +128,18 @@ func ExtractDmhyMagnetLinkInfo(resp *http.Response) []MagnetLinkInfo {
 	return magnetLinkInfos
 }
 
-func DumpAnimateMagnetInfo(animateMagnetInfo AnimateMagnetInfo) {
-	for animateKey, episodeMagnetLinkInfos := range animateMagnetInfo {
-		fmt.Println("=========================")
-		fmt.Println("Name: " + animateKey)
-		for episodeId, episodeMagnetLinkInfo := range episodeMagnetLinkInfos {
-			fmt.Println("Episode: ", episodeId)
-			for _, magnetLinkInfo := range episodeMagnetLinkInfo {
-				fmt.Println("MagnetLink/btNums: ",
-					magnetLinkInfo.magnetLink[:50]+ ".../" + strconv.Itoa(magnetLinkInfo.btNumber))
-			}
-		}
-		fmt.Println("=========================")
-	}
-}
-
-// Private
-func parseEpisode(title string) []float64 {
+func parseEpisode(title string, preferParser string) []float64 {
 	var episodeList []float64
 
 	floatPattern := regexp.MustCompile(`\d+\.?\d*`)
-	singlePattern := regexp.MustCompile(
-		`(\[\d+\.?\d*\])|(【\d+\.?\d*】)|(「\d+\.?\d*」)|(第\d+\.?\d*集)|(第\d+\.?\d*話)|(第\d+\.?\d*话)`)
+	var singlePattern *regexp.Regexp
+
+	if len(preferParser) > 0 {
+		singlePattern = regexp.MustCompile(preferParser)
+	} else {
+		singlePattern = regexp.MustCompile(
+			`(\[\d+\.?\d*\])|(【\d+\.?\d*】)|(「\d+\.?\d*」)|(第\d+\.?\d*集)|(第\d+\.?\d*話)|(第\d+\.?\d*话)`)
+	}
 
 	singleM := singlePattern.FindAllString(title, -1)
 	if len(singleM) > 0 {
@@ -178,14 +203,18 @@ func checkEpisodeLimit(episodes []string) bool {
 	return true
 }
 
-func genEpisodeMagnetMap(magnetLinkInfos []MagnetLinkInfo) map[float64][]MagnetLinkInfo {
+func genEpisodeMagnetMap(magnetLinkInfos []MagnetLinkInfo, animateStatus AnimateStatus) map[float64][]MagnetLinkInfo {
 	episodeMagnetMap := make(map[float64][]MagnetLinkInfo)
 
 	for _, magnetLinkInfo := range magnetLinkInfos {
-		for _, episode := range magnetLinkInfo.episodes {
+		for _, episode := range magnetLinkInfo.Episodes {
 			episodeMagnetMap[episode] = append(
 				episodeMagnetMap[episode], magnetLinkInfo)
 		}
+	}
+
+	for _, completedEpisode := range animateStatus.CompletedEpisodes {
+		delete(episodeMagnetMap, completedEpisode)
 	}
 
 	return episodeMagnetMap

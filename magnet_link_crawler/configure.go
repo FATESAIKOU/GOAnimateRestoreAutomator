@@ -12,9 +12,9 @@ type AnimateRequestInfo struct {
 }
 
 type AnimateStatus struct {
-	CompletedEpisodes []string
+	CompletedEpisodes []float64
 	PreferTeamIds []string
-	PreferParser []string
+	PreferParser string
 }
 
 func (animateRequestInfoSelf *AnimateRequestInfo) LoadJson(jsonFilePath string) *AnimateRequestInfo {
