@@ -20,12 +20,24 @@ func main() {
 	emailFilePath := os.Args[3]
 	animateRequestFilePath := os.Args[4]
 
+	// Load config files
 	downloadInfo := new(magnet_link_downloader.DownloadInfo).Load(
 		storagePath, errorFilePath)
 	mailInfo := new(notification_sender.MailInfo).LoadJson(emailFilePath)
 	animateRequestInfo := new(magnet_link_crawler.AnimateRequestInfo).LoadJson(animateRequestFilePath)
 
-	fmt.Println(downloadInfo.ErrorFilePath)
-	fmt.Println(mailInfo)
-	fmt.Println(animateRequestInfo.AnimateStatus["animate keyword"].PreferParser[0])
+	// Output checking info
+	fmt.Println("[Storage Path] ", downloadInfo.StoragePath)
+	fmt.Println("[Error Log Path] ", downloadInfo.ErrorFilePath)
+	fmt.Println("[Publisher] ", mailInfo.PublisherAccount)
+	fmt.Println("[Mail List] ", mailInfo.MailList)
+	for animateKeyword, _ := range animateRequestInfo.AnimateStatus {
+		fmt.Println("[Download Target] ", animateKeyword)
+	}
+
+	// Crawl website
+	animateMagnetInfo := magnet_link_crawler.GetAnimateMagnetInfo(
+		"https://share.dmhy.org/topics/list", animateRequestInfo)
+
+	magnet_link_crawler.DumpAnimateMagnetInfo(animateMagnetInfo)
 }
