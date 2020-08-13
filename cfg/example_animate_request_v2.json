@@ -1,18 +1,24 @@
 {
-  "租借女友": {
-    "CompletedEpisodes": [
-      1, 2, 3
-    ],
-    "PreferTeamIds": [
-      "117", "604", "185"
-    ],
-    "PreferParser": "\\[\\d+\\]"
-  },
-  "放学后+日记": {
-    "CompletedEpisodes": [
-      1, 2, 3
-    ],
-    "PreferTeamIds": [],
-    "PreferParser": ""
-  }
+	"放学后+日记": {
+		"CompletedEpisodes": [
+			1,
+			2,
+			3
+		],
+		"PreferTeamIds": [],
+		"PreferParser": ""
+	},
+	"租借女友": {
+		"CompletedEpisodes": [
+			1,
+			2,
+			3
+		],
+		"PreferTeamIds": [
+			"117",
+			"604",
+			"185"
+		],
+		"PreferParser": "\\[\\d+\\]"
+	}
 }
