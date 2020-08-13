@@ -27,10 +27,10 @@ func main() {
 	animateRequestInfo := new(magnet_link_crawler.AnimateRequestInfo).LoadJson(animateRequestFilePath)
 
 	// Output checking info
-	fmt.Println("[Storage Path] ", downloadInfo.StoragePath)
-	fmt.Println("[Error Log Path] ", downloadInfo.ErrorFilePath)
-	fmt.Println("[Publisher] ", mailInfo.PublisherAccount)
-	fmt.Println("[Mail List] ", mailInfo.MailList)
+	fmt.Println("[Storage Path]", downloadInfo.StoragePath)
+	fmt.Println("[Error Log Path]", downloadInfo.ErrorFilePath)
+	fmt.Println("[Publisher]", mailInfo.PublisherAccount)
+	fmt.Println("[Mail List]", mailInfo.MailList)
 	for animateKeyword, _ := range animateRequestInfo.AnimateStatus {
 		fmt.Println("[Download Target] ", animateKeyword)
 	}
@@ -39,10 +39,12 @@ func main() {
 	animateMagnetInfo := magnet_link_crawler.GetAnimateMagnetInfo(
 		"https://share.dmhy.org/topics/list", animateRequestInfo)
 
-	magnet_link_crawler.DumpAnimateMagnetInfo(animateMagnetInfo)
-
 	// Download
 	*animateRequestInfo = magnet_link_downloader.DownloadMagnet(animateMagnetInfo, *downloadInfo, *animateRequestInfo)
 
+	// Writeback
 	animateRequestInfo.SaveJson(animateRequestFilePath)
+
+	// Notificate
+	// TODO design notificate
 }

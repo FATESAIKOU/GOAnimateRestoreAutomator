@@ -10,25 +10,25 @@ func DownloadMagnet(animateMagnetInfo magnet_link_crawler.AnimateMagnetInfo, dow
 	requestInfo magnet_link_crawler.AnimateRequestInfo) magnet_link_crawler.AnimateRequestInfo{
 	fmt.Println(downloadInfo)
 
-	// TODO initialize a basic magnet downloader
-	// downloader := BasicDownloader.Init(downloaderInfo)
+	// Initialize a basic magnet downloader
+	downloader := new(BasicDownloader).Init(downloadInfo)
 
 	for animateKey, episodeMagnetMaps := range animateMagnetInfo {
-		fmt.Println("AnimateKeyword: ", animateKey)
+		fmt.Println("================================")
+		fmt.Println("AnimateKeyword:", animateKey)
 
 		for episode, magnetLinkInfos := range episodeMagnetMaps {
 			if requestInfo.AnimateStatus[animateKey].IsComplete(episode) {
 				continue
 			}
 
-			fmt.Println("Episode: ", episode)
-			fmt.Println(len(magnetLinkInfos))
+			fmt.Println("Episode:", episode)
 
-			// TODO use downloader to download animate with magnet link
-			// downloadedMagnetLinkInfo := downloader.Download(magnetLinkInfos, downloadInfo)
+			// Use downloader to download animate with magnet link
+			downloadedMagnetLinkInfo := downloader.Download(magnetLinkInfos)
 
-			// TODO update downloaded info
-			// requestInfo.AnimateStatus[animateKey].CommitEpisode(downloadedMagnetLinkInfo.Episodes...)
+			// Update downloaded info
+			requestInfo.AnimateStatus[animateKey].CommitEpisode(downloadedMagnetLinkInfo.Episodes...)
 		}
 	}
 
