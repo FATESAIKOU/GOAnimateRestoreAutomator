@@ -37,8 +37,8 @@ func GetAnimateMagnetInfo(pageUrl string, cfg *AnimateRequestInfo) AnimateMagnet
 		// Crawl and collect magnet link info
 		for _, teamId := range teamIds {
 			resp, _ := getPage(pageUrl + "?keyword=" + url.PathEscape(animateKey) + "&team_id=" + teamId)
-			magnetLinkInfos := extractDmhyMagnetLinkInfo(resp, animateStatus)
-			episodeMagnetMap := genEpisodeMagnetMap(magnetLinkInfos, animateStatus)
+			magnetLinkInfos := extractDmhyMagnetLinkInfo(resp, *animateStatus)
+			episodeMagnetMap := genEpisodeMagnetMap(magnetLinkInfos, *animateStatus)
 
 			for episode, magnetLinkInfos := range episodeMagnetMap {
 				animateMagnetInfo[animateKey][episode] = append(
