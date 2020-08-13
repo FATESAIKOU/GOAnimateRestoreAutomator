@@ -40,4 +40,9 @@ func main() {
 		"https://share.dmhy.org/topics/list", animateRequestInfo)
 
 	magnet_link_crawler.DumpAnimateMagnetInfo(animateMagnetInfo)
+
+	// Download
+	*animateRequestInfo = magnet_link_downloader.DownloadMagnet(animateMagnetInfo, *downloadInfo, *animateRequestInfo)
+
+	animateRequestInfo.SaveJson(animateRequestFilePath)
 }
