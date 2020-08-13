@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 )
 
 type AnimateMagnetInfo map[string]map[float64][]MagnetLinkInfo
@@ -47,7 +48,7 @@ func GetAnimateMagnetInfo(pageUrl string, cfg *AnimateRequestInfo) AnimateMagnet
 		}
 
 		// Sort result with BtNumber
-		for episode, _ := range animateMagnetInfo[animateKey] {
+		for episode := range animateMagnetInfo[animateKey] {
 			sort.Slice(animateMagnetInfo[animateKey][episode], func(i int, j int) bool {
 				return animateMagnetInfo[animateKey][episode][i].BtNumber >
 					animateMagnetInfo[animateKey][episode][j].BtNumber
@@ -65,8 +66,7 @@ func DumpAnimateMagnetInfo(animateMagnetInfo AnimateMagnetInfo) {
 		for episodeId, episodeMagnetLinkInfo := range episodeMagnetLinkInfos {
 			fmt.Println("Episode: ", episodeId)
 			for _, magnetLinkInfo := range episodeMagnetLinkInfo {
-				fmt.Println("MagnetLink/btNums: ",
-					magnetLinkInfo.MagnetLink[:50]+ ".../" + strconv.Itoa(magnetLinkInfo.BtNumber))
+				fmt.Println("Title: ", magnetLinkInfo.Title + "/" + strconv.Itoa(magnetLinkInfo.BtNumber))
 			}
 		}
 		fmt.Println("=========================")
@@ -111,6 +111,7 @@ func extractDmhyMagnetLinkInfo(resp *http.Response, animateStatus AnimateStatus)
 	var magnetLinkInfos []MagnetLinkInfo
 	doc.Find(".tablesorter tbody tr").Each(func(_ int, s *goquery.Selection) {
 		title := s.Find(".title a[target=_blank]").Text()
+		title = strings.Trim(title, "\t \n")
 		magnetLink, _ := s.Find(".download-arrow").Attr("href")
 		btNumber, _ := strconv.Atoi(s.Find(".btl_1").Text())
 		episodes := parseEpisode(title, animateStatus.PreferParser)
@@ -138,7 +139,7 @@ func parseEpisode(title string, preferParser string) []float64 {
 		singlePattern = regexp.MustCompile(preferParser)
 	} else {
 		singlePattern = regexp.MustCompile(
-			`(\[\d+\.?\d*\])|(【\d+\.?\d*】)|(「\d+\.?\d*」)|(第\d+\.?\d*集)|(第\d+\.?\d*話)|(第\d+\.?\d*话)`)
+			`(\[\d+\.?\d*])|(【\d+\.?\d*】)|(「\d+\.?\d*」)|(第\d+\.?\d*集)|(第\d+\.?\d*話)|(第\d+\.?\d*话)`)
 	}
 
 	singleM := singlePattern.FindAllString(title, -1)
