@@ -1,0 +1,30 @@
+{
+	"放学后+日记": {
+		"CompletedEpisodes": [
+			1,
+			2,
+			3,
+			4,
+			6,
+			5
+		],
+		"PreferTeamIds": [],
+		"PreferParser": ""
+	},
+	"租借女友": {
+		"CompletedEpisodes": [
+			1,
+			2,
+			3,
+			4,
+			5,
+			6
+		],
+		"PreferTeamIds": [
+			"117",
+			"604",
+			"185"
+		],
+		"PreferParser": "\\[\\d+\\]"
+	}
+}
