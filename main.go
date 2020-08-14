@@ -31,7 +31,7 @@ func main() {
 	fmt.Println("[Error Log Path]", downloadInfo.ErrorFilePath)
 	fmt.Println("[Publisher]", mailInfo.PublisherAccount)
 	fmt.Println("[Mail List]", mailInfo.MailList)
-	for animateKeyword, _ := range animateRequestInfo.AnimateStatus {
+	for animateKeyword, _ := range animateRequestInfo.AnimateStatusMap {
 		fmt.Println("[Download Target] ", animateKeyword)
 	}
 
@@ -40,11 +40,11 @@ func main() {
 		"https://share.dmhy.org/topics/list", animateRequestInfo)
 
 	// Download
-	*animateRequestInfo = magnet_link_downloader.DownloadMagnet(animateMagnetInfo, *downloadInfo, *animateRequestInfo)
+	newDownloads := magnet_link_downloader.DownloadMagnet(animateMagnetInfo, *downloadInfo, *animateRequestInfo)
+
+	// Notificate
+	notification_sender.SendMail(newDownloads, *mailInfo)
 
 	// Writeback
 	animateRequestInfo.SaveJson(animateRequestFilePath)
-
-	// Notificate
-	// TODO design notificate
 }

@@ -10,7 +10,8 @@ import (
 type MailInfo struct {
 	PublisherAccount string
 	PublisherPassword string
-	ImapService string
+	SmtpDomain string
+	SmtpServiceUrl string
 	MailList []string
 }
 
