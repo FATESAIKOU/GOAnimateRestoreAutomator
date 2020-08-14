@@ -8,7 +8,7 @@ import (
 
 // The log and settings for magnet link crawling
 type AnimateRequestInfo struct {
-	AnimateStatus map[string]*AnimateStatus
+	AnimateStatusMap map[string]*AnimateStatus
 }
 
 type AnimateStatus struct {
@@ -25,7 +25,7 @@ func (animateRequestInfoSelf *AnimateRequestInfo) LoadJson(jsonFilePath string) 
 	}
 
 	// Initialize map
-	animateRequestInfoSelf.AnimateStatus = make(map[string]*AnimateStatus)
+	animateRequestInfoSelf.AnimateStatusMap = make(map[string]*AnimateStatus)
 
 	// Parse json
 	var halfParseJson map[string]json.RawMessage
@@ -36,7 +36,7 @@ func (animateRequestInfoSelf *AnimateRequestInfo) LoadJson(jsonFilePath string) 
 		animateStatusTmp = new(AnimateStatus)
 		err = json.Unmarshal(statusJson, animateStatusTmp)
 
-		animateRequestInfoSelf.AnimateStatus[animateKeyword] = animateStatusTmp
+		animateRequestInfoSelf.AnimateStatusMap[animateKeyword] = animateStatusTmp
 	}
 
 	if err != nil {
@@ -47,8 +47,11 @@ func (animateRequestInfoSelf *AnimateRequestInfo) LoadJson(jsonFilePath string) 
 }
 
 func (animateRequestInfoSelf *AnimateRequestInfo) SaveJson(jsonFilePath string) {
-	rawCfgJson, _ := json.MarshalIndent(animateRequestInfoSelf.AnimateStatus, "", "\t")
-	ioutil.WriteFile(jsonFilePath, rawCfgJson, 0644)
+	rawCfgJson, _ := json.MarshalIndent(animateRequestInfoSelf.AnimateStatusMap, "", "\t")
+	err := ioutil.WriteFile(jsonFilePath, rawCfgJson, 0644)
+	if err != nil {
+		log.Fatal("Failed to writeback download log", err)
+	}
 }
 
 func (animateStatusSelf *AnimateStatus) CommitEpisode(episodes ... float64) {

@@ -27,10 +27,10 @@ type MagnetLinkInfo struct {
 func GetAnimateMagnetInfo(pageUrl string, cfg *AnimateRequestInfo) AnimateMagnetInfo {
 	animateMagnetInfo := make(AnimateMagnetInfo)
 
-	for animateKey, animateStatus := range cfg.AnimateStatus {
+	for animateKey, animateStatusMap := range cfg.AnimateStatusMap {
 		// initialization
 		animateMagnetInfo[animateKey] = make(map[float64][]MagnetLinkInfo)
-		teamIds := animateStatus.PreferTeamIds
+		teamIds := animateStatusMap.PreferTeamIds
 		if len(teamIds) == 0 {
 			teamIds = append(teamIds, "")
 		}
@@ -38,8 +38,8 @@ func GetAnimateMagnetInfo(pageUrl string, cfg *AnimateRequestInfo) AnimateMagnet
 		// Crawl and collect magnet link info
 		for _, teamId := range teamIds {
 			resp, _ := getPage(pageUrl + "?keyword=" + url.PathEscape(animateKey) + "&team_id=" + teamId)
-			magnetLinkInfos := extractDmhyMagnetLinkInfo(resp, *animateStatus)
-			episodeMagnetMap := genEpisodeMagnetMap(magnetLinkInfos, *animateStatus)
+			magnetLinkInfos := extractDmhyMagnetLinkInfo(resp, *animateStatusMap)
+			episodeMagnetMap := genEpisodeMagnetMap(magnetLinkInfos, *animateStatusMap)
 
 			for episode, magnetLinkInfos := range episodeMagnetMap {
 				animateMagnetInfo[animateKey][episode] = append(
