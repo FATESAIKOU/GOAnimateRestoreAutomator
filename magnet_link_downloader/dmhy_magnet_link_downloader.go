@@ -7,18 +7,20 @@ import (
 
 // Public
 func DownloadMagnet(animateMagnetInfo magnet_link_crawler.AnimateMagnetInfo, downloadInfo DownloadInfo,
-	requestInfo magnet_link_crawler.AnimateRequestInfo) magnet_link_crawler.AnimateRequestInfo{
+	requestInfo magnet_link_crawler.AnimateRequestInfo) map[string]*magnet_link_crawler.AnimateStatus {
 	fmt.Println(downloadInfo)
 
 	// Initialize a basic magnet downloader
 	downloader := new(BasicDownloader).Init(downloadInfo)
+	newDownloadeds := make(map[string]*magnet_link_crawler.AnimateStatus)
 
 	for animateKey, episodeMagnetMaps := range animateMagnetInfo {
 		fmt.Println("================================")
 		fmt.Println("AnimateKeyword:", animateKey)
 
+		newDownloadeds[animateKey] = new(magnet_link_crawler.AnimateStatus)
 		for episode, magnetLinkInfos := range episodeMagnetMaps {
-			if requestInfo.AnimateStatus[animateKey].IsComplete(episode) {
+			if requestInfo.AnimateStatusMap[animateKey].IsComplete(episode) {
 				continue
 			}
 
@@ -28,9 +30,10 @@ func DownloadMagnet(animateMagnetInfo magnet_link_crawler.AnimateMagnetInfo, dow
 			downloadedMagnetLinkInfo := downloader.Download(magnetLinkInfos)
 
 			// Update downloaded info
-			requestInfo.AnimateStatus[animateKey].CommitEpisode(downloadedMagnetLinkInfo.Episodes...)
+			requestInfo.AnimateStatusMap[animateKey].CommitEpisode(downloadedMagnetLinkInfo.Episodes...)
+			newDownloadeds[animateKey].CommitEpisode(downloadedMagnetLinkInfo.Episodes...)
 		}
 	}
 
-	return requestInfo
+	return newDownloadeds
 }
