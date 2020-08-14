@@ -28,7 +28,7 @@ func (basicDownloaderSelf BasicDownloader) Download(
 	magnetInfos []magnet_link_crawler.MagnetLinkInfo) magnet_link_crawler.MagnetLinkInfo {
 	for _, magnetInfo := range magnetInfos {
 		// TODO add timeout to downloader config
-		err := DownloadMagnetLink(magnetInfo, basicDownloaderSelf.StoragePath, 600)
+		err := DownloadMagnetLink(magnetInfo, basicDownloaderSelf.StoragePath, 2400)
 
 		if err == nil {
 			return magnetInfo
@@ -57,6 +57,7 @@ func DownloadMagnetLink(magnetLinkInfo magnet_link_crawler.MagnetLinkInfo, stora
 
 	cmd := exec.CommandContext(ctxt, "webtorrent", magnetLinkInfo.MagnetLink)
 	cmd.Dir = tmpDir
+	cmd.Stdout = os.Stdout
 
 	if err := cmd.Run(); err != nil {
 		if ctxt.Err() == context.DeadlineExceeded {
@@ -64,11 +65,6 @@ func DownloadMagnetLink(magnetLinkInfo magnet_link_crawler.MagnetLinkInfo, stora
 		} else {
 			log.Println("Download Failed:", err, ":", magnetLinkInfo.Title)
 		}
-		return err
-	}
-
-	if err := cmd.Wait(); err != nil {
-		log.Println("Failed to wait Download:", err, ":", magnetLinkInfo.Title)
 		return err
 	}
 

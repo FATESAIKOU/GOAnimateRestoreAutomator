@@ -3,7 +3,10 @@
 		"CompletedEpisodes": [
 			1,
 			2,
-			3
+			3,
+			4,
+			6,
+			5
 		],
 		"PreferTeamIds": [],
 		"PreferParser": ""
@@ -12,7 +15,10 @@
 		"CompletedEpisodes": [
 			1,
 			2,
-			3
+			3,
+			4,
+			5,
+			6
 		],
 		"PreferTeamIds": [
 			"117",
