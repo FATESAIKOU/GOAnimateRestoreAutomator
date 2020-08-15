@@ -14,10 +14,15 @@ func SendMail(newDownloadeds map[string]*magnet_link_crawler.AnimateStatus, mail
 	auth := smtp.PlainAuth(
 		"", mailInfo.PublisherAccount, mailInfo.PublisherPassword, mailInfo.SmtpDomain)
 
+	content := genContent(newDownloadeds)
+	if len(content) == 0 {
+		return
+	}
+
 	from := mailInfo.PublisherAccount
 	to   := mailInfo.MailList
 	msg	 := fmt.Sprintf("From: %s\nTo: %s\nSubject: Download Log\n\n%s",
-		from, strings.Join(to, ","), genContent(newDownloadeds))
+		from, strings.Join(to, ","), content)
 
 	err := smtp.SendMail(
 		mailInfo.SmtpServiceUrl,
