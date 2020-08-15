@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/FATESAIKOU/GOAnimateRestoreAutomator/magnet_link_crawler"
+	terminal "github.com/wayneashleyberry/terminal-dimensions"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -28,7 +31,7 @@ func (basicDownloaderSelf BasicDownloader) Download(
 	magnetInfos []magnet_link_crawler.MagnetLinkInfo) magnet_link_crawler.MagnetLinkInfo {
 	for _, magnetInfo := range magnetInfos {
 		// TODO add timeout to downloader config
-		err := DownloadMagnetLink(magnetInfo, basicDownloaderSelf.StoragePath, 2400)
+		err := DownloadMagnetLink(magnetInfo, basicDownloaderSelf.StoragePath, 30 * uint32(math.Ceil(magnetInfo.Size)))
 
 		if err == nil {
 			return magnetInfo
@@ -56,10 +59,20 @@ func DownloadMagnetLink(magnetLinkInfo magnet_link_crawler.MagnetLinkInfo, stora
 	}()
 
 	cmd := exec.CommandContext(ctxt, "webtorrent", magnetLinkInfo.MagnetLink)
+	log.Printf("Try to download: %s (%fMB)", magnetLinkInfo.Title, magnetLinkInfo.Size)
 	cmd.Dir = tmpDir
-	cmd.Stdout = os.Stdout
 
-	if err := cmd.Run(); err != nil {
+	cmd.Start()
+
+	endOfCmd := make(chan bool, 1)
+	endOfHandleProgress := make(chan bool, 1)
+	go handleProgress(tmpDir, magnetLinkInfo.Size, endOfCmd, endOfHandleProgress)
+
+	err = cmd.Wait()
+	endOfCmd <- true
+	<- endOfHandleProgress
+
+	if err != nil {
 		if ctxt.Err() == context.DeadlineExceeded {
 			log.Println("Download Timeout:", err, ":", magnetLinkInfo.Title)
 		} else {
@@ -70,8 +83,6 @@ func DownloadMagnetLink(magnetLinkInfo magnet_link_crawler.MagnetLinkInfo, stora
 
 	files, _ := ioutil.ReadDir(tmpDir)
 	for _, file := range files {
-		fmt.Println(file.Name())
-
 		err := os.Rename(filepath.Join(tmpDir, file.Name()), filepath.Join(storagePath, file.Name()))
 		if err != nil {
 			log.Println("Failed to move file:", err)
@@ -80,4 +91,41 @@ func DownloadMagnetLink(magnetLinkInfo magnet_link_crawler.MagnetLinkInfo, stora
 	}
 
 	return nil
+}
+
+// utils
+func handleProgress(tmpDir string, targetSize float64, endOfCmd chan bool,
+	endOfHandleProgress chan bool) {
+	preSize := 0.0
+	tWidth, _ := terminal.Width()
+
+	for {
+		select {
+		case <-endOfCmd:
+			fmt.Printf(strings.Repeat(" ", int(tWidth)) + "\n\033[F")
+			endOfHandleProgress <- true
+			return
+		default:
+			nowSize, _ := dirSize(tmpDir)
+			fmt.Printf("Progress: %f%% - %fMB/s\n\033[F",
+				math.Min(nowSize * 100 / targetSize, 100), nowSize - preSize)
+			preSize = nowSize
+			time.Sleep(1 * time.Second)
+			fmt.Printf(strings.Repeat(" ", int(tWidth)) + "\n\033[F")
+		}
+	}
+}
+
+func dirSize(path string) (float64, error) {
+	var size float64
+	err := filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			size += float64(info.Size())
+		}
+		return err
+	})
+	return size / 1048576.0, err
 }

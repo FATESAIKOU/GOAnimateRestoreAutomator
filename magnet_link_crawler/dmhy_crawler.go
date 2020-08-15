@@ -21,6 +21,7 @@ type MagnetLinkInfo struct {
 	MagnetLink string
 	Episodes []float64
 	BtNumber int
+	Size float64
 }
 
 // Public
@@ -115,6 +116,7 @@ func extractDmhyMagnetLinkInfo(resp *http.Response, animateStatus AnimateStatus)
 		magnetLink, _ := s.Find(".download-arrow").Attr("href")
 		btNumber, _ := strconv.Atoi(s.Find(".btl_1").Text())
 		episodes := parseEpisode(title, animateStatus.PreferParser)
+		size := toMB(s.Find("*:nth-child(5)").Text())
 
 		if len(episodes) > 0 {
 			magnetLinkInfos = append(magnetLinkInfos, MagnetLinkInfo{
@@ -122,6 +124,7 @@ func extractDmhyMagnetLinkInfo(resp *http.Response, animateStatus AnimateStatus)
 				MagnetLink: magnetLink,
 				Episodes: episodes,
 				BtNumber: btNumber,
+				Size: size,
 			})
 		}
 	})
@@ -219,4 +222,18 @@ func genEpisodeMagnetMap(magnetLinkInfos []MagnetLinkInfo, animateStatus Animate
 	}
 
 	return episodeMagnetMap
+}
+
+func toMB(sizeStr string) float64 {
+	floatPattern := regexp.MustCompile(`\d+\.?\d*`)
+	sizes := floatPattern.FindAllString(sizeStr, -1)
+	extractedSize, _ := strconv.ParseFloat(sizes[0], 10)
+
+	if strings.Contains(sizeStr, "GB") {
+		return extractedSize * 1024.0
+	} else if strings.Contains(sizeStr, "KB")  {
+		return extractedSize / 1024.0
+	} else {
+		return extractedSize
+	}
 }
