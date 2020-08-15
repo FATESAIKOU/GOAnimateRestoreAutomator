@@ -104,7 +104,7 @@ func handleProgress(cmd *exec.Cmd, tmpDir string, targetSize float64) {
 		preSize = nowSize
 		time.Sleep(1 * time.Second)
 
-		fmt.Printf("\033[F" + strings.Repeat(" ", int(tWidth)))
+		fmt.Println("\033[F" + strings.Repeat(" ", int(tWidth)))
 	}
 }
 
