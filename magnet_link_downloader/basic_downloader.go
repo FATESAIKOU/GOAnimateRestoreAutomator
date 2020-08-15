@@ -69,8 +69,10 @@ func DownloadMagnetLink(magnetLinkInfo magnet_link_crawler.MagnetLinkInfo, stora
 		handleProgress(tmpDir, magnetLinkInfo.Size, endOfCmd)
 	}()
 
-	if err = cmd.Wait(); err != nil {
-		endOfCmd <- true
+	err = cmd.Wait()
+	endOfCmd <- true
+
+	if err != nil {
 		if ctxt.Err() == context.DeadlineExceeded {
 			log.Println("Download Timeout:", err, ":", magnetLinkInfo.Title)
 		} else {
@@ -99,16 +101,16 @@ func handleProgress(tmpDir string, targetSize float64, endOfCmd chan bool) {
 	for {
 		select {
 		case <-endOfCmd:
+			fmt.Printf(strings.Repeat(" ", int(tWidth)) + "\n\033[F")
 			break
 		default:
 			nowSize, _ := dirSize(tmpDir)
 			fmt.Printf("Progress: %f%% - %fMB/s\n\033[F",
 				math.Min(nowSize * 100 / targetSize, 100), nowSize - preSize)
 			preSize = nowSize
+			time.Sleep(1 * time.Second)
+			fmt.Printf(strings.Repeat(" ", int(tWidth)) + "\n\033[F")
 		}
-
-		time.Sleep(1 * time.Second)
-		fmt.Printf(strings.Repeat(" ", int(tWidth)) + "\n\033[F")
 	}
 }
 
