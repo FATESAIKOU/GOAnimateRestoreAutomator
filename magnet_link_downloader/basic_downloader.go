@@ -31,7 +31,7 @@ func (basicDownloaderSelf BasicDownloader) Download(
 	magnetInfos []magnet_link_crawler.MagnetLinkInfo) magnet_link_crawler.MagnetLinkInfo {
 	for _, magnetInfo := range magnetInfos {
 		// TODO add timeout to downloader config
-		err := DownloadMagnetLink(magnetInfo, basicDownloaderSelf.StoragePath, 10)
+		err := DownloadMagnetLink(magnetInfo, basicDownloaderSelf.StoragePath, 30 * uint32(math.Ceil(magnetInfo.Size)))
 
 		if err == nil {
 			return magnetInfo
@@ -99,14 +99,12 @@ func handleProgress(cmd *exec.Cmd, tmpDir string, targetSize float64) {
 
 	for {
 		nowSize, _ := dirSize(tmpDir)
-		fmt.Printf("Progress: %f%% - %fMB/s\n", math.Min(nowSize * 100 / targetSize, 100),
+		fmt.Printf("\033[FProgress: %f%% - %fMB/s\n", math.Min(nowSize * 100 / targetSize, 100),
 			nowSize - preSize)
 		preSize = nowSize
 		time.Sleep(1 * time.Second)
 
-		fmt.Printf(strings.Repeat("\b", int(tWidth)))
-		fmt.Printf(strings.Repeat(" ", int(tWidth)))
-		fmt.Printf(strings.Repeat("\b", int(tWidth)))
+		fmt.Println("\033[F" + strings.Repeat(" ", int(tWidth)))
 	}
 }
 
