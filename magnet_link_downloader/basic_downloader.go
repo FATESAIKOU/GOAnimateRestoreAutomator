@@ -2,12 +2,16 @@ package magnet_link_downloader
 
 import (
 	"context"
+	"fmt"
 	"github.com/FATESAIKOU/GOAnimateRestoreAutomator/magnet_link_crawler"
+	terminal "github.com/wayneashleyberry/terminal-dimensions"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -27,7 +31,7 @@ func (basicDownloaderSelf BasicDownloader) Download(
 	magnetInfos []magnet_link_crawler.MagnetLinkInfo) magnet_link_crawler.MagnetLinkInfo {
 	for _, magnetInfo := range magnetInfos {
 		// TODO add timeout to downloader config
-		err := DownloadMagnetLink(magnetInfo, basicDownloaderSelf.StoragePath, 2400)
+		err := DownloadMagnetLink(magnetInfo, basicDownloaderSelf.StoragePath, 10)
 
 		if err == nil {
 			return magnetInfo
@@ -55,11 +59,19 @@ func DownloadMagnetLink(magnetLinkInfo magnet_link_crawler.MagnetLinkInfo, stora
 	}()
 
 	cmd := exec.CommandContext(ctxt, "webtorrent", magnetLinkInfo.MagnetLink)
+	log.Printf("Try to download: %s (%fMB)", magnetLinkInfo.Title, magnetLinkInfo.Size)
 	cmd.Dir = tmpDir
 
-	log.Printf("Try to download: %s (%f)", magnetLinkInfo.Title, magnetLinkInfo.Size)
+	cmd.Start()
+	go func() {
+		handleProgress(cmd, tmpDir, magnetLinkInfo.Size)
+	}()
 
-	if err := cmd.Run(); err != nil {
+	err = cmd.Wait()
+	tWidth, _ := terminal.Width()
+	fmt.Printf(strings.Repeat("\b", int(tWidth)))
+
+	if err != nil {
 		if ctxt.Err() == context.DeadlineExceeded {
 			log.Println("Download Timeout:", err, ":", magnetLinkInfo.Title)
 		} else {
@@ -78,4 +90,36 @@ func DownloadMagnetLink(magnetLinkInfo magnet_link_crawler.MagnetLinkInfo, stora
 	}
 
 	return nil
+}
+
+// utils
+func handleProgress(cmd *exec.Cmd, tmpDir string, targetSize float64) {
+	preSize := 0.0
+	tWidth, _ := terminal.Width()
+
+	for {
+		nowSize, _ := dirSize(tmpDir)
+		fmt.Printf("Progress: %f%% - %fMB/s\n", math.Min(nowSize * 100 / targetSize, 100),
+			nowSize - preSize)
+		preSize = nowSize
+		time.Sleep(1 * time.Second)
+
+		fmt.Printf(strings.Repeat("\b", int(tWidth)))
+		fmt.Printf(strings.Repeat(" ", int(tWidth)))
+		fmt.Printf(strings.Repeat("\b", int(tWidth)))
+	}
+}
+
+func dirSize(path string) (float64, error) {
+	var size float64
+	err := filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			size += float64(info.Size())
+		}
+		return err
+	})
+	return size / 1048576.0, err
 }
