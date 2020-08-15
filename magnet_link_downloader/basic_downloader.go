@@ -2,7 +2,6 @@ package magnet_link_downloader
 
 import (
 	"context"
-	"fmt"
 	"github.com/FATESAIKOU/GOAnimateRestoreAutomator/magnet_link_crawler"
 	"io/ioutil"
 	"log"
@@ -57,7 +56,8 @@ func DownloadMagnetLink(magnetLinkInfo magnet_link_crawler.MagnetLinkInfo, stora
 
 	cmd := exec.CommandContext(ctxt, "webtorrent", magnetLinkInfo.MagnetLink)
 	cmd.Dir = tmpDir
-	cmd.Stdout = os.Stdout
+
+	log.Printf("Try to download: %s (%f)", magnetLinkInfo.Title, magnetLinkInfo.Size)
 
 	if err := cmd.Run(); err != nil {
 		if ctxt.Err() == context.DeadlineExceeded {
@@ -70,8 +70,6 @@ func DownloadMagnetLink(magnetLinkInfo magnet_link_crawler.MagnetLinkInfo, stora
 
 	files, _ := ioutil.ReadDir(tmpDir)
 	for _, file := range files {
-		fmt.Println(file.Name())
-
 		err := os.Rename(filepath.Join(tmpDir, file.Name()), filepath.Join(storagePath, file.Name()))
 		if err != nil {
 			log.Println("Failed to move file:", err)
