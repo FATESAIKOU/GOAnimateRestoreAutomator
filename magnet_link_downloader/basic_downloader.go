@@ -97,6 +97,7 @@ func handleProgress(cmd *exec.Cmd, tmpDir string, targetSize float64) {
 	preSize := 0.0
 	tWidth, _ := terminal.Width()
 
+	fmt.Println("")
 	for {
 		nowSize, _ := dirSize(tmpDir)
 		fmt.Printf("\033[FProgress: %f%% - %fMB/s\n", math.Min(nowSize * 100 / targetSize, 100),
