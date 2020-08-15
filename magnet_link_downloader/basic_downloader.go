@@ -68,8 +68,7 @@ func DownloadMagnetLink(magnetLinkInfo magnet_link_crawler.MagnetLinkInfo, stora
 	}()
 
 	err = cmd.Wait()
-	tWidth, _ := terminal.Width()
-	fmt.Printf(strings.Repeat("\b", int(tWidth)))
+	fmt.Printf("\033[F")
 
 	if err != nil {
 		if ctxt.Err() == context.DeadlineExceeded {
@@ -105,7 +104,7 @@ func handleProgress(cmd *exec.Cmd, tmpDir string, targetSize float64) {
 		preSize = nowSize
 		time.Sleep(1 * time.Second)
 
-		fmt.Println("\033[F" + strings.Repeat(" ", int(tWidth)))
+		fmt.Printf("\033[F" + strings.Repeat(" ", int(tWidth)))
 	}
 }
 
