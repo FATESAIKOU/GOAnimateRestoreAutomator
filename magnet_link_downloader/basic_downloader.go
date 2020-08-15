@@ -65,12 +65,12 @@ func DownloadMagnetLink(magnetLinkInfo magnet_link_crawler.MagnetLinkInfo, stora
 	cmd.Start()
 
 	endOfCmd := make(chan bool, 1)
-	go func() {
-		handleProgress(tmpDir, magnetLinkInfo.Size, endOfCmd)
-	}()
+	endOfHandleProgress := make(chan bool, 1)
+	go handleProgress(tmpDir, magnetLinkInfo.Size, endOfCmd, endOfHandleProgress)
 
 	err = cmd.Wait()
 	endOfCmd <- true
+	<- endOfHandleProgress
 
 	if err != nil {
 		if ctxt.Err() == context.DeadlineExceeded {
@@ -94,7 +94,8 @@ func DownloadMagnetLink(magnetLinkInfo magnet_link_crawler.MagnetLinkInfo, stora
 }
 
 // utils
-func handleProgress(tmpDir string, targetSize float64, endOfCmd chan bool) {
+func handleProgress(tmpDir string, targetSize float64, endOfCmd chan bool,
+	endOfHandleProgress chan bool) {
 	preSize := 0.0
 	tWidth, _ := terminal.Width()
 
@@ -102,7 +103,8 @@ func handleProgress(tmpDir string, targetSize float64, endOfCmd chan bool) {
 		select {
 		case <-endOfCmd:
 			fmt.Printf(strings.Repeat(" ", int(tWidth)) + "\n\033[F")
-			break
+			endOfHandleProgress <- true
+			return
 		default:
 			nowSize, _ := dirSize(tmpDir)
 			fmt.Printf("Progress: %f%% - %fMB/s\n\033[F",
