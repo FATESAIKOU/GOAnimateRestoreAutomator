@@ -1,4 +1,5 @@
 *.swp
 *.swo
 *.json
+*.log
 .idea/*
