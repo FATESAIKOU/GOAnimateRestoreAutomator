@@ -1,8 +1,10 @@
 package magnet_link_crawler
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"io/ioutil"
 	"log"
 	"math"
 	"net/http"
@@ -38,8 +40,8 @@ func GetAnimateMagnetInfo(pageUrl string, cfg *AnimateRequestInfo) AnimateMagnet
 
 		// Crawl and collect magnet link info
 		for _, teamId := range teamIds {
-			resp, _ := getPage(pageUrl + "?keyword=" + url.PathEscape(animateKey) + "&team_id=" + teamId)
-			magnetLinkInfos := extractDmhyMagnetLinkInfo(resp, *animateStatusMap)
+			pageContent := getPage(pageUrl + "?keyword=" + url.PathEscape(animateKey) + "&team_id=" + teamId)
+			magnetLinkInfos := extractDmhyMagnetLinkInfo(pageContent, *animateStatusMap)
 			episodeMagnetMap := genEpisodeMagnetMap(magnetLinkInfos, *animateStatusMap)
 
 			for episode, magnetLinkInfos := range episodeMagnetMap {
@@ -75,13 +77,13 @@ func DumpAnimateMagnetInfo(animateMagnetInfo AnimateMagnetInfo) {
 }
 
 // Private
-func getPage(pageUrl string) (resp *http.Response, err error) {
+func getPage(pageUrl string) (pageContent []byte) {
 	// Setup cookie
 	jar, _ := cookiejar.New(nil)
 	var cookies []*http.Cookie
 	cookies = append(cookies, &http.Cookie{
 		Name: "cf_clearance",
-		Value: "f1d8bd94c77e76a423871e94de9ec2ce64cdb366-1597199043-0-1zc9740c68z47380d19z8273ec9-150",
+		Value: "0ee3ea3d4f26ad9a948f622481edfea47aa68ed2-1598110643-0-1z9d9e0d3cz47380d19z8273ec9-150",
 		Path: "/",
 		Domain: ".dmhy.org",
 	})
@@ -94,17 +96,17 @@ func getPage(pageUrl string) (resp *http.Response, err error) {
 
 	// Setup header
 	req.Header.Set("User-Agent",
-		"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36")
+		"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36")
 
 	// Do request
-	resp, err = client.Do(req)
+	resp, _ := client.Do(req)
+	pageContent, _ = ioutil.ReadAll(resp.Body)
 
 	return
 }
 
-func extractDmhyMagnetLinkInfo(resp *http.Response, animateStatus AnimateStatus) []MagnetLinkInfo {
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
-	defer resp.Body.Close()
+func extractDmhyMagnetLinkInfo(pageContent []byte, animateStatus AnimateStatus) []MagnetLinkInfo {
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(pageContent))
 	if err != nil {
 		log.Fatal("Failed to parse dmhy response: ", err)
 	}
