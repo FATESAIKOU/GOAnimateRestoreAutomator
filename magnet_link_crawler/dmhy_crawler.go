@@ -4,12 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	"io/ioutil"
 	"log"
 	"math"
-	"net/http"
-	"net/http/cookiejar"
 	"net/url"
+	"os/exec"
 	"regexp"
 	"sort"
 	"strconv"
@@ -39,7 +37,9 @@ func GetAnimateMagnetInfo(pageUrl string, cfg *AnimateRequestInfo) AnimateMagnet
 		}
 
 		// Crawl and collect magnet link info
+		log.Println("[Crawling]: " + animateKey)
 		for _, teamId := range teamIds {
+			log.Println("[TeamId]: " + teamId)
 			pageContent := getPage(pageUrl + "?keyword=" + url.PathEscape(animateKey) + "&team_id=" + teamId)
 			magnetLinkInfos := extractDmhyMagnetLinkInfo(pageContent, *animateStatusMap)
 			episodeMagnetMap := genEpisodeMagnetMap(magnetLinkInfos, *animateStatusMap)
@@ -78,29 +78,31 @@ func DumpAnimateMagnetInfo(animateMagnetInfo AnimateMagnetInfo) {
 
 // Private
 func getPage(pageUrl string) (pageContent []byte) {
-	// Setup cookie
-	jar, _ := cookiejar.New(nil)
-	var cookies []*http.Cookie
-	cookies = append(cookies, &http.Cookie{
-		Name: "cf_clearance",
-		Value: "0ee3ea3d4f26ad9a948f622481edfea47aa68ed2-1598110643-0-1z9d9e0d3cz47380d19z8273ec9-150",
-		Path: "/",
-		Domain: ".dmhy.org",
-	})
-	u, _ := url.Parse(pageUrl)
-	jar.SetCookies(u, cookies)
+	crawlSrc :=
+		`
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
 
-	// Set cookie
-	client := &http.Client{ Jar: jar }
-	req, _ := http.NewRequest("GET", u.String(), nil)
+options = Options()
+options.headless = True
+driver = webdriver.Firefox(options=options)
 
-	// Setup header
-	req.Header.Set("User-Agent",
-		"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36")
+driver.get(target)
 
-	// Do request
-	resp, _ := client.Do(req)
-	pageContent, _ = ioutil.ReadAll(resp.Body)
+WebDriverWait(driver, 600).until(lambda d: len(driver.find_elements_by_id('top')) > 0)
+print(driver.page_source)
+
+driver.close()
+exit(0)`
+	crawlSrc = fmt.Sprintf("target = \"%s\"\n%s", pageUrl, crawlSrc)
+
+	cmd := exec.Command("python3")
+	cmd.Stdin = strings.NewReader(crawlSrc)
+	pageContent, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Fatal("Failed to crawl magnet link:", string(pageContent))
+	}
 
 	return
 }
