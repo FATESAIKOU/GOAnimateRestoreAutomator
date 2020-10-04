@@ -80,20 +80,19 @@ func DumpAnimateMagnetInfo(animateMagnetInfo AnimateMagnetInfo) {
 func getPage(pageUrl string) (pageContent []byte) {
 	crawlSrc :=
 		`
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
+from playwright import sync_playwright
+import time
 
-options = Options()
-options.headless = True
-driver = webdriver.Firefox(options=options)
+page_content = ""
+with sync_playwright() as p:
+	browser = p.firefox.launch(headless=False) 
+	page = browser.newPage() 
+	page.goto(target) 
+	time.sleep(10)
+	page_content = page.content()
+	browser.close()
 
-driver.get(target)
-
-WebDriverWait(driver, 600).until(lambda d: len(driver.find_elements_by_id('top')) > 0)
-print(driver.page_source)
-
-driver.close()
+print(page_content)
 exit(0)`
 	crawlSrc = fmt.Sprintf("target = \"%s\"\n%s", pageUrl, crawlSrc)
 
