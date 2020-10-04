@@ -85,7 +85,7 @@ import time
 
 page_content = ""
 with sync_playwright() as p:
-	browser = p.firefox.launch(headless=False) 
+	browser = p.firefox.launch() 
 	page = browser.newPage() 
 	page.goto(target) 
 	time.sleep(10)
