@@ -48,3 +48,4 @@ func genContent(newDownloaded map[string]*magnet_link_crawler.AnimateStatus) str
 
 	return content
 }
+
