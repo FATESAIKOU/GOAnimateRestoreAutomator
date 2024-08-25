@@ -2,12 +2,13 @@ package magnet_link_crawler
 
 import (
 	"bytes"
+	"io/ioutil"
+	"net/http"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"log"
 	"math"
 	"net/url"
-	"os/exec"
 	"regexp"
 	"sort"
 	"strconv"
@@ -78,32 +79,20 @@ func DumpAnimateMagnetInfo(animateMagnetInfo AnimateMagnetInfo) {
 
 // Private
 func getPage(pageUrl string) (pageContent []byte) {
-	crawlSrc :=
-		`
-from playwright import sync_playwright
-import time
-
-page_content = ""
-with sync_playwright() as p:
-	browser = p.firefox.launch() 
-	page = browser.newPage() 
-	page.goto(target) 
-	time.sleep(10)
-	page_content = page.content()
-	browser.close()
-
-print(page_content)
-exit(0)`
-	crawlSrc = fmt.Sprintf("target = \"%s\"\n%s", pageUrl, crawlSrc)
-
-	cmd := exec.Command("python3")
-	cmd.Stdin = strings.NewReader(crawlSrc)
-	pageContent, err := cmd.CombinedOutput()
+	// 发送 GET 请求
+	resp, err := http.Get(pageUrl)
 	if err != nil {
-		log.Fatal("Failed to crawl magnet link:", string(pageContent))
+		log.Fatal("Failed to crawl magnet link:", err)
+	}
+	defer resp.Body.Close()
+
+	// 读取响应体
+	pageContent, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal("Failed to crawl magnet link:", err)
 	}
 
-	return
+	return pageContent
 }
 
 func extractDmhyMagnetLinkInfo(pageContent []byte, animateStatus AnimateStatus) []MagnetLinkInfo {
