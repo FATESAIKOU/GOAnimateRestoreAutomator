@@ -39,7 +39,8 @@ func main() {
 		"https://share.dmhy.org/topics/list", animateRequestInfo)
 
 	// Download
-	newDownloads := magnet_link_downloader.DownloadMagnet(animateMagnetInfo, *downloadInfo, *animateRequestInfo)
+	//newDownloads := magnet_link_downloader.DownloadMagnet(animateMagnetInfo, *downloadInfo, *animateRequestInfo)
+	magnet_link_downloader.DownloadMagnet(animateMagnetInfo, *downloadInfo, *animateRequestInfo)
 
 	// Notificate
 	//notification_sender.SendMail(newDownloads, *mailInfo)
