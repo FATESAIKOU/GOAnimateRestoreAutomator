@@ -43,7 +43,7 @@ func main() {
 	newDownloads := magnet_link_downloader.DownloadMagnet(animateMagnetInfo, *downloadInfo, *animateRequestInfo)
 
 	// Notificate
-	notification_sender.SendMail(newDownloads, *mailInfo)
+	//notification_sender.SendMail(newDownloads, *mailInfo)
 
 	// Writeback
 	animateRequestInfo.SaveJson(animateRequestFilePath)
