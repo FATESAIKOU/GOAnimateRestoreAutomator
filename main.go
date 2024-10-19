@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"github.com/FATESAIKOU/GOAnimateRestoreAutomator/magnet_link_crawler"
 	"github.com/FATESAIKOU/GOAnimateRestoreAutomator/magnet_link_downloader"
-	"github.com/FATESAIKOU/GOAnimateRestoreAutomator/notification_sender"
 	"os"
 )
 
